@@ -12,10 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
 
 # Load the renamed environment file
-load_dotenv(dotenv_path='.env.dev')
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,24 +45,31 @@ INSTALLED_APPS = [
     "properties",
 ]
 
-# Use them in settings
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB'),
-        'USER': os.getenv('POSTGRES_USER'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-        'HOST': os.getenv('POSTGRES_HOST'),
-        'PORT': os.getenv('POSTGRES_PORT'),
+        'NAME': 'property_db',
+        'USER': 'property_user',
+        'PASSWORD': 'property_password',
+        'HOST': 'postgres',   # matches service name in docker-compose
+        'PORT': '5432',
     }
 }
 
+
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL'),
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
     }
 }
+# Optional: Make Django use Redis for session caching too
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# SESSION_CACHE_ALIAS = 'default'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
