@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from .models import Property
+import logging
 from django_redis import get_redis_connection
 
 def get_all_properties():
@@ -15,26 +16,28 @@ def get_all_properties():
 
     return properties
 
-
+# Configure logger
+logger = logging.getLogger(__name__)
 
 def get_redis_cache_metrics():
     """
-    Retrieve Redis keyspace hit/miss metrics and calculate hit ratio.
+    Retrieve Redis cache metrics (hits, misses, and hit ratio),
+    and log results or errors appropriately.
     """
     try:
-        # Connect to Redis using Django's configured cache
+        # Connect to Redis via django-redis
         redis_conn = get_redis_connection("default")
 
-        # Get Redis info dictionary
+        # Fetch Redis server stats
         info = redis_conn.info()
 
-        # Extract keyspace hits and misses
+        # Extract keyspace hit/miss data
         hits = info.get("keyspace_hits", 0)
         misses = info.get("keyspace_misses", 0)
 
-        # Compute hit ratio
-        total = hits + misses
-        hit_ratio = (hits / total) if total > 0 else 0
+        # Calculate total requests and hit ratio
+        total_requests = hits + misses
+        hit_ratio = (hits / total_requests) if total_requests > 0 else 0
 
         metrics = {
             "hits": hits,
@@ -42,9 +45,11 @@ def get_redis_cache_metrics():
             "hit_ratio": round(hit_ratio, 4),
         }
 
-        print(f"📊 Redis Cache Metrics: {metrics}")
+        # Log the metrics
+        logger.info(f"📊 Redis Cache Metrics: {metrics}")
+
         return metrics
 
     except Exception as e:
-        print(f"⚠️ Error retrieving Redis metrics: {e}")
+        logger.error(f"⚠️ Error retrieving Redis metrics: {e}")
         return {"error": str(e)}
